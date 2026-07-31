@@ -61,7 +61,17 @@ lerobot-teleoperate \
 
 Every command that powers or moves real hardware is meant to be run by a human operator —
 the arm has no effective e-stop; cutting power is the stop. See `docs/ROADMAP.md` for the
-full plan and `README`'s Chinese twin for the vendor-tutorial command mapping.
+full plan.
+
+## Vendor tutorial command mapping
+
+| Tutorial (vendor fork) | This plugin (stock LeRobot) |
+|---|---|
+| `python -m lerobot.set_middle --port=/dev/ttyACM0` | `episode1-set-middle --port=/dev/ttyACM0` |
+| `python -m lerobot.episode_default_position` | `episode1-default-position` |
+| `--robot.type=enpei_follower --teleop.type=enpei_leader --enpei_speed_mode=record` | `--robot.type=episode1_follower --teleop.type=episode1_leader --robot.speed_mode=record --teleop.speed_mode=record` |
+| `python -m lerobot.find_cameras opencv` | `lerobot-find-cameras opencv` (stock) |
+| `python -m lerobot.test_policy` (inference) | `lerobot-rollout --policy.path=...` (stock, 0.6) |
 
 ## Credits & license
 
