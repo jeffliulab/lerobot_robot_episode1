@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lerobot_robot_episode1"
+version = "0.1.0"
+description = "LeRobot third-party plugin for the Episode1 robot kit: Episode1 follower arm (TCP) + 7-servo Feetech teleop leader arm"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "Apache-2.0" }
+dependencies = [
+    # 官方 lerobot,插件机制(register_third_party_plugins)自 0.6.0 起可用
+    "lerobot>=0.6,<0.7",
+    # 飞特总线舵机 SDK(import 名 scservo_sdk),主臂驱动依赖
+    "feetech-servo-sdk>=1.0.0,<2.0.0",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8.1.0"]
+
+[project.scripts]
+episode1-doctor = "lerobot_robot_episode1.cli.doctor:main"
+episode1-set-middle = "lerobot_robot_episode1.cli.set_middle:main"
+episode1-default-position = "lerobot_robot_episode1.cli.default_position:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+lerobot_robot_episode1 = ["data/*.json"]

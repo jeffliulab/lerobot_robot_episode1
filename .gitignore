@@ -1,0 +1,21 @@
+# 内部笔记(本地)
+CLAUDE.md
+.claude/
+
+# 环境
+.venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# 测试/工具缓存
+.pytest_cache/
+.ruff_cache/
+
+# 运行产物
+outputs/
+*.log
