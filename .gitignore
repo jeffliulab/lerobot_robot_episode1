@@ -19,3 +19,8 @@ dist/
 # 运行产物
 outputs/
 *.log
+
+# 临时物与运行残渣
+temp/
+MUJOCO_LOG.TXT
+node_modules/

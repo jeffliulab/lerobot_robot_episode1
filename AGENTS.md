@@ -7,7 +7,7 @@ Episode1 机器人套件的 **LeRobot 第三方插件**：向官方 lerobot（Py
 **不是** lerobot 的 fork，**不是** 完整机器人栈——训练、数据集、相机等全部用官方 lerobot 的能力。
 
 代码渊源：从 `enpeizhao/lerobot_single_student`（Apache-2.0）移植并适配官方插件体系，
-基点为官方 lerobot `91b110d8`（2025-07-15）。保留版权头 + 注明修改，见 NOTICE。
+基点为官方 lerobot `519b7611`（2025-07-13）。保留版权头 + 注明修改，见 NOTICE。
 
 ## 任务 → 去哪查
 

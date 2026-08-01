@@ -1,7 +1,8 @@
 # ROADMAP · lerobot_robot_episode1 深度规划（2026-07-31）
 
 > 本文档是「替代恩培 fork、统一到官方 lerobot」这条线的深度研究与阶段规划。
-> 研究基于：官方 lerobot 0.6.0/0.6.1 源码、恩培 fork（基点 91b110d8）全量 diff、厂商教程 2.2–2.10。
+> 研究基于：官方 lerobot 0.6.0/0.6.1 源码、恩培 fork（基点 `519b7611`，2025-07-13）全量 diff、
+> 厂商教程 2.2–2.10。
 
 ## 一、深度研究结论（插件包方案的边界条件）
 
@@ -13,8 +14,13 @@
 - **相机 MJPG**：官方 0.6 的 `OpenCVCameraConfig` 已原生支持 `fourcc="MJPG"` 字段
   （`configuration_opencv.py:52`）——恩培硬写进驱动的 hack 用 config 就能解决：
   `--robot.cameras="{handeye: {type: opencv, index_or_path: 2, width: 320, height: 240, fps: 30, fourcc: MJPG}, ...}"`。
-- **train.py 的 pin_memory 改动、modeling_act 的 MPS 回退**：前者与 Episode 无关，
-  后者是撤销官方 bug 修复——两者都确认丢弃。
+- **train.py 与 modeling_act.py 的差异不是恩培改的**（2026-08-01 更正）：这两个文件在
+  恩培树里与基点 `519b7611` **字节一致**，差异全部来自官方在他分叉之后自己的提交
+  （`modeling_act.py` 是 2025-07-15 的 MPS 修复 #1490，`train.py` 是同期的 pin_memory 改动）。
+  与 Episode 无关，不移植。
+  > ⚠️ 此处原先写的是「恩培撤销了官方 bug 修复 / 顺手修了 pin_memory」——**那是错的**，
+  > 根因是基点定偏了 2 天（误记为 `91b110d8` 2025-07-15）。教训：**做 fork 差异归因前，
+  > 先用 blob 哈希把基点定准**，否则会把上游自己的演进算到 fork 作者头上。
 
 结论：**官方 0.6 + 纯插件**完整覆盖厂商教程 2.4 的全部软件需求，无功能缺口。
 

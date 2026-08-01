@@ -5,7 +5,7 @@ This product includes software derived from:
 
 - huggingface/lerobot (https://github.com/huggingface/lerobot)
   Copyright 2024 The HuggingFace Inc. team. Licensed under Apache License 2.0.
-  (base commit 91b110d8, 2025-07-15: vendored legacy Feetech motors bus driver
+  (base commit 519b7611, 2025-07-13: vendored legacy Feetech motors bus driver
   in src/lerobot_robot_episode1/motors/)
 
 - enpeizhao/lerobot_single_student (https://github.com/enpeizhao/lerobot_single_student)
