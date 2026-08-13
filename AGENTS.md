@@ -18,7 +18,7 @@ Episode1 机器人套件的 **LeRobot 第三方插件**：向官方 lerobot（Py
 | 飞特总线驱动（ vendored 老版，自包含） | `src/lerobot_robot_episode1/motors/` |
 | 默认值（速度表/滤波/夹爪量程/ID 范围/波特率） | 各 `config_*.py` 的 config 字段，**不许散落到逻辑代码里** |
 | 自检 / 中位校准 / 默认位 | `src/lerobot_robot_episode1/cli/` |
-| 硬件背景与舵机编号事实 | `~/episode-robot-dev-framework/episode-leader-arm/README.md` |
+| 硬件背景与舵机编号事实 | `$EPISODE_HOME/episode-leader-arm/README.md` |
 
 ## 目录地图
 
