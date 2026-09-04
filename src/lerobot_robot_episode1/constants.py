@@ -24,8 +24,10 @@ DEFAULT_SPEED_MODE = "record"
 
 # 夹爪量程（度）。出处：恩培 fork EnpeiLeader 类常量 min/max_gripper_angle = 20/110，
 # 注释写明"根据自己夹爪的实际角度范围设置"。
+# ⛔ 上限按本机实测红线定为 100：超过 100° 有打坏夹爪齿轮的风险（episode-driver/安全注意-SAFETY.md），
+#    厂商文档的 0~110 是舵机量程不是夹爪安全量程。2026-09-04 从 110 改为 100。
 DEFAULT_GRIPPER_MIN_ANGLE = 20.0
-DEFAULT_GRIPPER_MAX_ANGLE = 110.0
+DEFAULT_GRIPPER_MAX_ANGLE = 100.0
 
 # 主臂夹爪舵机的全行程角度（度），用作 leader 夹爪 → follower 夹爪映射的分母。
 # 出处：恩培 fork gripper_mapping_ratio = (max-min)/90 里写死的 90。

@@ -43,9 +43,9 @@ def test_connect_records_pose_and_moves_to_startup(tmp_path, monkeypatch):
     assert fake.synced == 1
     # 归位两段 + 夹爪
     assert fake.angle_mode_calls == [
-        [180, 90, 83, 210, 110, 210, 90],
-        [180, 90, 83, 210, 20, 210, 90],
-    ]
+        [180, 90, 83, 210, 110, 210],
+        [180, 90, 83, 210, 20, 210],
+    ]  # 厂商 API 只收 6 个角，第 7 个不再发
     assert fake.sent_gripper == [10]
 
 
@@ -114,8 +114,8 @@ def test_gripper_range_clamped(tmp_path, monkeypatch):
     )
     follower.send_action(_neutral_action())  # 过首帧检查
     sent = follower.send_action({"gripper.pos": 999.0})
-    assert fake.sent_gripper[-1] == 110  # 夹爪量程上限
-    assert sent["gripper.pos"] == 110
+    assert fake.sent_gripper[-1] == 100  # 夹爪量程上限（本机实测红线 ≤100）
+    assert sent["gripper.pos"] == 100
 
 
 # ------------------------------------------------------------ 弧度开关
@@ -130,10 +130,10 @@ def test_radian_mode(tmp_path, monkeypatch):
         filter_alpha_gripper=1.0,
     )
     action = {f"joint{i}.pos": float(np.deg2rad(POSE[i - 1])) for i in range(1, 7)}
-    action["gripper.pos"] = 1.5  # [0,1] 归一化，超 1 → 钳到上限 110°
+    action["gripper.pos"] = 1.5  # [0,1] 归一化，超 1 → 钳到上限 100°
     sent = follower.send_action(action)
     assert fake.dynamic_moves[-1]["1"] == pytest.approx(POSE[0], abs=0.01)
-    assert fake.sent_gripper[-1] == 110
+    assert fake.sent_gripper[-1] == 100
     # 返回值保持弧度/[0,1] 单位
     assert sent["joint1.pos"] == pytest.approx(np.deg2rad(POSE[0]), abs=1e-3)
     assert sent["gripper.pos"] == pytest.approx(1.0)

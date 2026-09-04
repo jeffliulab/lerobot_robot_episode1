@@ -86,7 +86,7 @@ def test_get_action_first_frame_failure_raises(tmp_path):
 
 
 def test_get_action_gripper_mapping(tmp_path):
-    # 主臂夹爪满行程 90° 应映射到从臂夹爪上限 110°（默认量程 [20, 110]）
+    # 主臂夹爪满行程 90° 应映射到从臂夹爪上限 100°（默认量程 [20, 100]；上限按本机实测红线 ≤100，2026-09-04 从 110 改）
     bus = FakeLeaderBus()
     leader = _make_leader(tmp_path, fake_bus=bus)
     leader.connect(calibrate=False)
@@ -97,7 +97,7 @@ def test_get_action_gripper_mapping(tmp_path):
     zero = leader.zero_references[7]
     bus.positions[7] = zero + int(90 * 4096 / 360)
     action = leader.get_action()
-    assert action["gripper.pos"] == 110
+    assert action["gripper.pos"] == 100
 
 
 def test_get_action_radian_mode(tmp_path):

@@ -151,10 +151,12 @@ class Episode1Follower(Robot):
 
             if self.config.move_to_startup_on_connect:
                 # 移到默认位置
-                t = self.controller.angle_mode(list(self.config.startup_joint_positions))
+                # ⛔ 厂商 API 的 angle_mode 只收 6 个关节角；配置里第 7 个是恩培 fork 私有服务器才认的扩展，
+                #    新版上位机（0.9.9.5.1）无此约定，多发一个数会落到未定义行为。只发前 6 个，夹爪走 servo_gripper。
+                t = self.controller.angle_mode(list(self.config.startup_joint_positions)[:6])
                 if isinstance(t, (int, float)):
                     time.sleep(t)
-                t = self.controller.angle_mode(list(self.config.startup_joint_positions_2))
+                t = self.controller.angle_mode(list(self.config.startup_joint_positions_2)[:6])
                 if isinstance(t, (int, float)):
                     time.sleep(t)
                 # 夹爪运动到 startup_gripper_angle
