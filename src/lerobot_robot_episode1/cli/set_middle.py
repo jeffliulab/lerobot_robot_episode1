@@ -64,6 +64,7 @@ def reset_middle_positions(controller, motor_range):
     motor_names = [f"motor{i}" for i in range(motor_range[0], motor_range[1] + 1)]
     controller.motors_bus.write("Torque_Enable", 128, motor_names)
     time.sleep(0.5)
+    controller.motors_bus.track_positions = {}   # 同上：清掉防跨圈补偿的记忆，否则 2048 会被报成 ±4096 偏移
     after = controller.batch_read_positions()
     print("\n已重置所有电机中位位置。写入后读数:", ", ".join(f"电机{i}: {int(v)}" for i, v in after.items()))
 
@@ -139,6 +140,9 @@ def set_middle_now(controller, motor_range, calib_id: str) -> bool:
     print("写入前原始读数:", ", ".join(f"电机{i}: {int(v)}" for i, v in before.items()))
     controller.motors_bus.write("Torque_Enable", 128, motor_names)   # 飞特「中位校准」：当前位置定义为 2048
     time.sleep(0.5)
+    # ⛔ 总线封装有「防跨圈跳变」补偿：一次读数比上次跳超过半圈就自动 ±4096。中位写入后读数
+    #    从 4320 这类值直接变 2048，正是它眼里的"跳变"，会把 2048 报成 6144。清掉它的记忆再读。
+    controller.motors_bus.track_positions = {}
     after = controller.batch_read_positions()
     print("写入后原始读数:", ", ".join(f"电机{i}: {int(v)}" for i, v in after.items()))
     bad = {i: int(v) for i, v in after.items() if abs(int(v) - MIDDLE_TARGET) > MIDDLE_TOLERANCE}
