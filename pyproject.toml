@@ -23,6 +23,7 @@ test = ["pytest>=8.1.0"]
 episode1-doctor = "lerobot_robot_episode1.cli.doctor:main"
 episode1-set-middle = "lerobot_robot_episode1.cli.set_middle:main"
 episode1-default-position = "lerobot_robot_episode1.cli.default_position:main"
+episode1-pose-check = "lerobot_robot_episode1.cli.pose_check:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
