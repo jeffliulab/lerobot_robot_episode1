@@ -17,6 +17,7 @@
 
 # 执行中位位置校准
 import argparse
+import sys
 import json
 import logging
 import time
@@ -41,22 +42,10 @@ def input_available():
 
 
 def get_key():
-    """Get a single keypress"""
-    try:
-        import sys, tty, termios
-        fd = sys.stdin.fileno()
-        old_settings = termios.tcgetattr(fd)
-        try:
-            tty.setraw(sys.stdin.fileno())
-            ch = sys.stdin.read(1)
-        finally:
-            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-        return ch
-    except Exception:
-        # Fallback if the above doesn't work
-        if input_available():
-            return sys.stdin.read(1)
-        return ''
+    """Get a single keypress（调用方已把终端切成 cbreak，这里直接读一个字符）"""
+    import sys
+    return sys.stdin.read(1)
+
 
 
 def reset_middle_positions(controller, motor_range):
@@ -74,7 +63,9 @@ def reset_middle_positions(controller, motor_range):
     # 写入 128 到所有电机的 Torque_Enable
     motor_names = [f"motor{i}" for i in range(motor_range[0], motor_range[1] + 1)]
     controller.motors_bus.write("Torque_Enable", 128, motor_names)
-    print("已重置所有电机中位位置")
+    time.sleep(0.5)
+    after = controller.batch_read_positions()
+    print("\n已重置所有电机中位位置。写入后读数:", ", ".join(f"电机{i}: {int(v)}" for i, v in after.items()))
 
 
 def read_raw_position(controller, motor_id):
@@ -132,6 +123,34 @@ def save_zero_references(controller, motor_range, calib_id: str) -> None:
     print(f"零点参考已保存到 {fpath}")
 
 
+MIDDLE_TARGET = 2048          # 飞特舵机一圈 4096 格的正中
+MIDDLE_TOLERANCE = 100        # 校准后读数离 2048 超过这个值就当没写进去，提示重试
+
+
+def set_middle_now(controller, motor_range, calib_id: str) -> bool:
+    """不进交互循环：读一次 → 写中位（Torque_Enable=128）→ 再读一次给人对比 → 存零点参考。
+
+    适合终端收不到按键（输入法、select 在行缓冲下要等回车）的情况。
+    返回 True 表示所有电机读数都落在 2048±MIDDLE_TOLERANCE。
+    """
+    motor_names = [f"motor{i}" for i in range(motor_range[0], motor_range[1] + 1)]
+    controller.motors_bus.write("Torque_Enable", 0, motor_names)
+    before = controller.batch_read_positions()
+    print("写入前原始读数:", ", ".join(f"电机{i}: {int(v)}" for i, v in before.items()))
+    controller.motors_bus.write("Torque_Enable", 128, motor_names)   # 飞特「中位校准」：当前位置定义为 2048
+    time.sleep(0.5)
+    after = controller.batch_read_positions()
+    print("写入后原始读数:", ", ".join(f"电机{i}: {int(v)}" for i, v in after.items()))
+    bad = {i: int(v) for i, v in after.items() if abs(int(v) - MIDDLE_TARGET) > MIDDLE_TOLERANCE}
+    if bad:
+        print(f"⚠️ 这些电机没落到 {MIDDLE_TARGET}±{MIDDLE_TOLERANCE}: {bad}。"
+              "检查该电机通电/接线，或把关节稍微动一下后重跑本命令。未保存零点参考。")
+        return False
+    print("✅ 全部电机已定义为中位 2048")
+    save_zero_references(controller, motor_range, calib_id)
+    return True
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Episode1 主臂中位（零点）校准")
     parser.add_argument("--port", default="/dev/ttyACM0", help="串口设备路径 (默认: /dev/ttyACM0)")
@@ -143,6 +162,10 @@ def main() -> None:
         "--id", default="default",
         help="校准文件 id（与 --teleop.id 对应，默认: default）。退出时可选择把当前读数存为零点参考。",
     )
+    parser.add_argument(
+        "--now", action="store_true",
+        help="不进交互循环：把主臂当前姿态直接定义为中位并保存零点参考（先手动把主臂摆好再跑）",
+    )
     args = parser.parse_args()
     motor_range = tuple(args.motor_range)
 
@@ -153,6 +176,13 @@ def main() -> None:
 
     # 连接到电机
     controller.connect()
+    if args.now:
+        try:
+            ok = set_middle_now(controller, motor_range, args.id)
+        finally:
+            controller.disconnect()
+            print("控制器已断开连接。")
+        raise SystemExit(0 if ok else 1)
 
     # 启动时先解锁所有电机
     motor_names = [f"motor{i}" for i in range(motor_range[0], motor_range[1] + 1)]
@@ -162,6 +192,13 @@ def main() -> None:
     # 电机锁定状态（True = 锁定/扭矩启用，False = 解锁/扭矩禁用）
     motors_locked = False
 
+    # 把终端切到 cbreak：单个按键立即可读，不用回车（Ctrl+C 仍然有效）
+    _fd = None; _old_tty = None
+    try:
+        import termios, tty
+        _fd = sys.stdin.fileno(); _old_tty = termios.tcgetattr(_fd); tty.setcbreak(_fd)
+    except Exception:
+        pass  # 非终端（如管道）就退回原来的 select 探测
     try:
         print(f"开始持续监控位置。电机范围: {motor_range[0]}-{motor_range[1]}。按 Ctrl+C 停止。")
         print("您可以在监控时手动移动机械臂。")
@@ -197,6 +234,9 @@ def main() -> None:
     except KeyboardInterrupt:
         print("\n用户停止监控。")
     finally:
+        if _old_tty is not None:
+            import termios
+            termios.tcsetattr(_fd, termios.TCSADRAIN, _old_tty)
         # 确保在断开连接前解锁电机（禁用扭矩）
         if motors_locked:
             motor_names = [f"motor{i}" for i in range(motor_range[0], motor_range[1] + 1)]
